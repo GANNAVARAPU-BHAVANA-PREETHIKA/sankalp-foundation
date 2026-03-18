@@ -1,24 +1,25 @@
-# Sankalp Foundation
+# Sankalp Full-Stack Single Deploy
 
-## Deployment on Render
+**Single Render Web Service** (Frontend + Backend):
 
-1. Fork/Clone repo
-2. Connect to Render dashboard
-3. New Static Site → GitHub repo
-4. Build command: `npm install && npm run build`
-5. Publish directory: `dist`
-6. Deploy!
+| Setting | Value |
+|---------|-------|
+| **Root Directory** | `/` |
+| **Build** | `npm install && cd backend && npm install && cd .. && npm run build-prod` |
+| **Start** | `npm start` |
+| **Plan** | Individual ($19) |
 
-## Local Development
+**Now works**: Root `package.json` has "start": "cd backend && node server.js"
 
-```bash
-npm install
-npm run dev
+**Env Vars**:
+```
+PORT=10000
+SUPABASE_URL=...
+SMTP_HOST=smtp.gmail.com
+SMTP_PORT=587
+SMTP_USER=...
+SMTP_PASS=...
+ADMIN_EMAIL=...
 ```
 
-## Features
-- React + Vite + Tailwind
-- Responsive design
-- WhatsApp contact form
-- Founder messages, team images
-- Optimized for production
+Deploy → single service, full-stack live!
