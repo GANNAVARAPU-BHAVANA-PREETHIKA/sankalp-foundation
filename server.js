@@ -1,4 +1,10 @@
-require("dotenv").config();
+import dotenv from 'dotenv';
+dotenv.config();
+const express = require("express");
+const path = require("path");
+const cors = require("cors");
+const { createClient } = require("@supabase/supabase-js");
+const nodemailer = require("nodemailer");
 const express = require("express");
 const path = require("path");
 const cors = require("cors");
@@ -21,7 +27,7 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY
 );
 
-const transporter = nodemailer.createTransporter({
+const transporter = nodemailer.createTransport({
   host: process.env.SMTP_HOST || 'smtp.gmail.com',
   port: parseInt(process.env.SMTP_PORT || '587'),
   secure: false,
