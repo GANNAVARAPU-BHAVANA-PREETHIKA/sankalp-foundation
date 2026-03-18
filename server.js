@@ -1,10 +1,4 @@
-import dotenv from 'dotenv';
-dotenv.config();
-const express = require("express");
-const path = require("path");
-const cors = require("cors");
-const { createClient } = require("@supabase/supabase-js");
-const nodemailer = require("nodemailer");
+require("dotenv").config();
 const express = require("express");
 const path = require("path");
 const cors = require("cors");
@@ -12,22 +6,20 @@ const { createClient } = require("@supabase/supabase-js");
 const nodemailer = require("nodemailer");
 
 const app = express();
+const PORT = process.env.PORT || 5000;
+
+// Middleware
 app.use(cors({ origin: true }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Serve frontend static files
-app.use(express.static(path.join(__dirname, 'dist')));
-
-// API routes
-const PORT = process.env.PORT || 5000;
-
+// Supabase & Email
 const supabase = createClient(
   process.env.SUPABASE_URL,
   process.env.SUPABASE_SERVICE_ROLE_KEY
 );
 
-const transporter = nodemailer.createTransport({
+const transporter = nodemailer.createTransporter({
   host: process.env.SMTP_HOST || 'smtp.gmail.com',
   port: parseInt(process.env.SMTP_PORT || '587'),
   secure: false,
@@ -37,62 +29,40 @@ const transporter = nodemailer.createTransport({
   }
 });
 
-// Frontend catch-all AFTER API routes
-app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, 'dist', 'index.html'));
-});
-
-app.get("/api/", async (req, res) => {
+// API ROUTES FIRST (before static)
+app.get('/api/', async (req, res) => {
   try {
-    const { data, error } = await supabase.from('donations').select('count').single();
+    const { data, error } = await supabase
+      .from('donations')
+      .select('count', { count: 'exact', head: true });
     res.json({ 
       status: 'OK', 
       db: 'Connected', 
-      tableCount: data ? data.count : 0
+      tableCount: data?.count || 0,
+      error: error?.message || null 
     });
   } catch (err) {
-    res.json({ status: 'DB Error', error: err.message });
+    res.status(500).json({ status: 'DB Error', error: err.message });
   }
 });
 
-app.post("/api/donate", async (req, res) => {
-  // [existing donate logic from backend/server.js - copied exactly]
-  console.log("DONATION:", req.body);
-
+app.post('/api/donate', async (req, res) => {
   try {
-    const {
-      name, email, phone, city, amount,
-      wants80g, pan, address, pin, state
-    } = req.body;
-
-    const { data: insertData, error: insertError } = await supabase.from('donations').insert({
+    const { name, email, phone, city, amount, wants80g, pan, address, pin, state } = req.body;
+    
+    // Insert donation
+    const { data, error } = await supabase.from('donations').insert({
       name, email, phone, city, amount: Number(amount),
-      wants80g: wants80g === 'true' || wants80g === true || wants80g === 'on',
+      wants80g: wants80g === true || wants80g === 'true' || wants80g === 'on',
       pan, address, pin, state
     }).select();
-    console.log('INSERT:', insertData, insertError);
 
-    // Admin email...
-    const adminDate = new Date().toLocaleDateString('en-IN');
-    const adminHtml = `
-<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="utf-8">
-  <style>body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; } /* simplified */</style>
-</head>
-<body>
-  <h1>New Donation ₹${amount}</h1>
-  <p>Name: ${name}</p>
-  <p>Email: ${email}</p>
-  <p>Phone: ${phone}</p>
-</body>
-</html>`;
+    // Admin email (simplified)
     await transporter.sendMail({
       from: `"Sankalp" <${process.env.SMTP_USER}>`,
       to: process.env.ADMIN_EMAIL || process.env.SMTP_USER,
       subject: `New Donation ₹${amount}`,
-      html: adminHtml
+      text: `New donation: ${name} (${email}) - ₹${amount}`
     });
 
     res.json({ success: true });
@@ -102,7 +72,16 @@ app.post("/api/donate", async (req, res) => {
   }
 });
 
+// SERVE FRONTEND - AFTER API ROUTES
+app.use(express.static(path.join(__dirname, '../dist')));
+
+// SPA catch-all
+app.get('*', (req, res) => {
+  res.sendFile(path.join(__dirname, '../dist/index.html'));
+});
+
 app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
+  console.log(`🚀 Server + Frontend on http://localhost:${PORT}`);
+  console.log(`📊 API: http://localhost:${PORT}/api/`);
 });
 
