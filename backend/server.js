@@ -1,15 +1,16 @@
-require("dotenv").config();
+const path = require("path");
+require("dotenv").config({ path: path.resolve(__dirname, ".env") });
+require("dotenv").config({ path: path.resolve(__dirname, "../.env") });
 const express = require("express");
-const cors = require("cors");
 const { createClient } = require("@supabase/supabase-js");
 const nodemailer = require("nodemailer");
 
 const app = express();
-app.use(cors({ origin: true }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 const PORT = process.env.PORT || 5000;
+const DIST_DIR = path.resolve(__dirname, "../dist");
 
 const supabase = createClient(
   process.env.SUPABASE_URL,
@@ -27,7 +28,7 @@ const transporter = nodemailer.createTransport({
 });
 
 
-app.get("/", async (req, res) => {
+app.get("/api/health", async (req, res) => {
   try {
     const { data, error } = await supabase.from('donations').select('count').single();
     res.json({ 
@@ -214,7 +215,13 @@ ${wants80g === 'true' ? `
   }
 });
 
+app.use(express.static(DIST_DIR));
+
+app.get(/.*/, (req, res) => {
+  res.sendFile(path.join(DIST_DIR, "index.html"));
+});
+
 app.listen(PORT, () => {
-  console.log(`Backend: localhost:${PORT}`);
+  console.log(`Server running on port ${PORT}`);
 });
 

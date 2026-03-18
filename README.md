@@ -1,20 +1,25 @@
-# Sankalp Full-Stack Single Deploy
+# Sankalp Foundation Deployment
 
-**Single Render Web Service** (Frontend + Backend):
+This project is configured for a single Render Web Service that serves both the frontend and backend.
 
 | Setting | Value |
 |---------|-------|
-| **Root Directory** | `/` |
-| **Build** | `npm install && cd backend && npm install && cd .. && npm run build-prod` |
-| **Start** | `npm start` |
-| **Plan** | Individual ($19) |
+| Root Directory | `/` |
+| Build Command | `npm run render-build` |
+| Start Command | `npm start` |
 
-**Now works**: Root `package.json` has "start": "cd backend && node server.js"
+What Render does:
+1. Installs root dependencies.
+2. Installs backend dependencies.
+3. Builds the Vite frontend into `dist/`.
+4. Starts the Express backend from `backend/server.js`.
+5. Serves the API and frontend from the same domain.
 
-**Env Vars**:
-```
-PORT=10000
+Required environment variables:
+
+```env
 SUPABASE_URL=...
+SUPABASE_SERVICE_ROLE_KEY=...
 SMTP_HOST=smtp.gmail.com
 SMTP_PORT=587
 SMTP_USER=...
@@ -22,4 +27,11 @@ SMTP_PASS=...
 ADMIN_EMAIL=...
 ```
 
-Deploy → single service, full-stack live!
+Notes:
+- Do not set `PORT` manually on Render.
+- Do not set `VITE_API_BASE_URL` on Render.
+- For local frontend development, you can set `VITE_API_BASE_URL=http://localhost:5000`.
+
+Health check endpoint:
+
+`/api/health`

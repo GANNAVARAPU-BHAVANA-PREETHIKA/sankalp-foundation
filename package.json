@@ -9,9 +9,9 @@
     "build": "vite build",
     "preview": "vite preview",
     "lint": "tsc --noEmit",
-    "install-all": "npm install && cd backend && npm install && cd ..",
-    "start": "cd backend && node server.js",
-    "build-prod": "npm run install-all && npm run build"
+    "postinstall": "npm --prefix backend install",
+    "start": "npm --prefix backend start",
+    "render-build": "npm install && npm --prefix backend install && npm run build"
   },
   "dependencies": {
     "react": "^19.2.4",
