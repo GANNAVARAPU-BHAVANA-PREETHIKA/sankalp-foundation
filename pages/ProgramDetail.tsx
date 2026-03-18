@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useParams, Link, Navigate } from 'react-router-dom';
 import { ArrowLeft, CheckCircle, Heart, Target, Lightbulb, TrendingUp, ChevronLeft, ChevronRight, Activity, Users, Globe } from 'lucide-react';
+import { assetPath } from '../services/assets';
 
 interface ProgramDetailData {
   id: string;
@@ -215,7 +216,7 @@ const ProgramDetail: React.FC = () => {
       {/* Hero Header */}
       <div className="relative h-[400px] md:h-[500px]">
         <img 
-          src={program.heroImage} 
+          src={assetPath(program.heroImage)} 
           alt={program.title} 
           className="w-full h-full object-cover"
         />
@@ -249,7 +250,7 @@ const ProgramDetail: React.FC = () => {
                 </div>
                 <div className="relative h-64 md:h-auto">
                   <img 
-                    src={program.problemImage} 
+                    src={assetPath(program.problemImage)} 
                     alt="Problem context" 
                     className="absolute inset-0 w-full h-full object-cover"
                   />
@@ -308,7 +309,7 @@ const ProgramDetail: React.FC = () => {
                    ))}
                 </div>
                 <div className="rounded-xl overflow-hidden shadow-lg h-full min-h-[300px]">
-                   <img src={program.approachImage} alt="Our approach in action" className="w-full h-full object-cover transform hover:scale-105 transition-transform duration-700" />
+                   <img src={assetPath(program.approachImage)} alt="Our approach in action" className="w-full h-full object-cover transform hover:scale-105 transition-transform duration-700" />
                 </div>
               </div>
             </section>
@@ -337,7 +338,7 @@ const ProgramDetail: React.FC = () => {
               <div className="relative group bg-gray-100 rounded-xl overflow-hidden">
                 <div className="aspect-[16/9] w-full relative">
                     <img 
-                      src={program.gallery[currentGalleryIndex]} 
+                      src={assetPath(program.gallery[currentGalleryIndex])} 
                       alt={`Gallery image ${currentGalleryIndex + 1}`} 
                       className="w-full h-full object-cover transition-opacity duration-300"
                     />
@@ -388,7 +389,7 @@ const ProgramDetail: React.FC = () => {
                             : 'border-transparent opacity-70 hover:opacity-100'
                         }`}
                     >
-                        <img src={img} alt={`Thumbnail ${index + 1}`} className="w-full h-full object-cover" />
+                        <img src={assetPath(img)} alt={`Thumbnail ${index + 1}`} className="w-full h-full object-cover" />
                         {currentGalleryIndex === index && (
                            <div className="absolute inset-0 bg-primary/10"></div>
                         )}

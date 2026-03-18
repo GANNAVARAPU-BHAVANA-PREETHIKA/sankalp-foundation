@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { CreditCard, CheckCircle, AlertCircle, Loader2 } from 'lucide-react';
 import { DonationFormData, FetchStatus } from '../types';
 import { postData } from '../services/api';
+import { assetPath } from '../services/assets';
 
 const amounts = [500, 1000, 2500, 5000, 10000];
 
@@ -147,7 +148,7 @@ const Donate: React.FC = () => {
                   <h2 className="text-xl font-bold mb-6">Bank Transfer Details</h2>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-start">
                     <div className="flex flex-col items-center">
-                      <img src="/qr-code.png" alt="UPI QR" className="w-80 h-80" />
+                      <img src={assetPath('/qr-code.png')} alt="UPI QR" className="w-80 h-80" />
                       <p className="mt-2 text-sm text-gray-600">Scan to Pay via UPI</p>
                     </div>
                     <div className="bg-blue-50 rounded-lg p-6 text-left">
@@ -283,4 +284,3 @@ const Donate: React.FC = () => {
 };
 
 export default Donate;
-

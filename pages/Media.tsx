@@ -1,4 +1,5 @@
 import React from 'react';
+import { assetPath } from '../services/assets';
 
 const news = [
   { id: 1, title: 'Support a verified cause that ensures 100 % transparency and measurable impact. Every donation helps change lives — and you can track its progress.', date: 'Jan 12, 2026', image: '/news1.png' },
@@ -25,7 +26,7 @@ const Media: React.FC = () => {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-16">
           {news.map(item => (
             <div key={item.id} className="bg-white rounded-lg shadow overflow-hidden hover:shadow-lg transition-shadow">
-              <img src={item.image} alt={item.title} className="w-full h-48 object-cover" />
+              <img src={assetPath(item.image)} alt={item.title} className="w-full h-48 object-cover" />
               <div className="p-6">
                 <p className="text-xs text-secondary font-bold mb-2">{item.date}</p>
                 <h3 className="text-lg font-bold text-gray-900 mb-2">{item.title}</h3>
@@ -39,7 +40,7 @@ const Media: React.FC = () => {
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
           {gallery.map((src, idx) => (
             <div key={idx} className="aspect-square overflow-hidden rounded-lg">
-              <img src={src} alt="Gallery" className="w-full h-full object-cover hover:scale-110 transition-transform duration-300 cursor-pointer" />
+              <img src={assetPath(src)} alt="Gallery" className="w-full h-full object-cover hover:scale-110 transition-transform duration-300 cursor-pointer" />
             </div>
           ))}
         </div>
