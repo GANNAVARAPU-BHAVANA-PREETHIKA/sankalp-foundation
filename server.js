@@ -37,7 +37,8 @@ const transporter = nodemailer.createTransport({
   }
 });
 
-app.get("/", async (req, res) => {
+// Frontend catch-all AFTER API routes
+app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'dist', 'index.html'));
 });
 
