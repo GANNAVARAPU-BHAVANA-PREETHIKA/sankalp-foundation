@@ -19,8 +19,16 @@ export const postData = async (
   if (!response.ok) {
     let errorMessage = "Request failed";
     try {
-      const errorData = await response.json();
-      errorMessage = errorData.error || errorMessage;
+      const contentType = response.headers.get("content-type") || "";
+      if (contentType.includes("application/json")) {
+        const errorData = await response.json();
+        errorMessage = errorData.error || errorMessage;
+      } else {
+        const text = await response.text();
+        if (text.trim()) {
+          errorMessage = text.slice(0, 200);
+        }
+      }
     } catch {}
     throw new Error(errorMessage);
   }
