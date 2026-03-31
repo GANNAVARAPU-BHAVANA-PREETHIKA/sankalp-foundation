@@ -14,11 +14,11 @@ import Contact from './pages/Contact';
 
 // Helper component to scroll to top on route change
 const ScrollToTop = () => {
-  const { pathname } = useLocation();
+  const { pathname, search, hash, key } = useLocation();
   
   React.useEffect(() => {
-    window.scrollTo(0, 0);
-  }, [pathname]);
+    window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
+  }, [pathname, search, hash, key]);
 
   return null;
 };

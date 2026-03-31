@@ -97,8 +97,8 @@ const Donate: React.FC = () => {
               </div>
               <h2 className="text-2xl font-bold text-gray-900 mb-2">Thank You!</h2>
               <p className="text-gray-600 mb-6">
-                Your donation details have been submitted successfully.
-                We will verify the transaction and send you a receipt shortly.
+                Your donation details were saved successfully.
+                Thank you for your donation.
               </p>
               <button
                 onClick={resetForm}

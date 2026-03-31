@@ -3,10 +3,11 @@ require("dotenv").config({ path: path.resolve(__dirname, ".env") });
 require("dotenv").config({ path: path.resolve(__dirname, "../.env") });
 
 const express = require("express");
+const cors = require("cors");
 const { createClient } = require("@supabase/supabase-js");
-const nodemailer = require("nodemailer");
 
 const app = express();
+app.use(cors({ origin: true }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
@@ -18,14 +19,37 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY
 );
 
-const transporter = nodemailer.createTransport({
-  host: process.env.SMTP_HOST || "smtp.gmail.com",
-  port: parseInt(process.env.SMTP_PORT || "587", 10),
-  secure: false,
-  auth: {
-    user: process.env.SMTP_USER,
-    pass: process.env.SMTP_PASS,
-  },
+app.get("/api/debug/donations", async (req, res) => {
+  try {
+    const { data, error } = await supabase
+      .from("donations")
+      .select("*")
+      .limit(1);
+
+    if (error) {
+      return res.status(500).json({
+        ok: false,
+        supabaseUrl: process.env.SUPABASE_URL,
+        table: "public.donations",
+        error: error.message,
+        hint: "Supabase connected, but the donations table may be missing from the schema cache or unavailable in this project.",
+      });
+    }
+
+    res.json({
+      ok: true,
+      supabaseUrl: process.env.SUPABASE_URL,
+      table: "public.donations",
+      rowCount: Array.isArray(data) ? data.length : 0,
+    });
+  } catch (err) {
+    res.status(500).json({
+      ok: false,
+      supabaseUrl: process.env.SUPABASE_URL,
+      table: "public.donations",
+      error: err.message || "Debug check failed",
+    });
+  }
 });
 
 app.get("/api/health", async (req, res) => {
@@ -66,158 +90,21 @@ app.post("/api/donate", async (req, res) => {
 
     if (insertError) {
       console.error("SUPABASE INSERT ERROR:", insertError);
-      return res.status(500).json({ error: insertError.message || "Failed to save donation" });
+      return res.status(500).json({
+        error: insertError.message || "Failed to save donation",
+        hint:
+          insertError.message?.includes("schema cache") || insertError.message?.includes("Could not find the table")
+            ? "Supabase is connected, but public.donations is not available in the schema cache for the configured project."
+            : undefined,
+      });
     }
 
     console.log("INSERT:", insertData);
-
-    const mailWarnings = [];
-    const adminDate = new Date().toLocaleDateString("en-IN");
-    const adminHtml = `
-<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="utf-8">
-  <style>
-    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px; }
-    h1 { color: #2563eb; }
-    .section { margin: 30px 0; padding: 20px; background: #f8fafc; border-radius: 12px; border-left: 4px solid #3b82f6; }
-    .highlight { background: #dbeafe; padding: 12px; border-radius: 8px; font-weight: 600; }
-    .emoji { font-size: 1.5em; }
-    table { width: 100%; border-collapse: collapse; margin: 20px 0; }
-    th, td { padding: 12px; text-align: left; border-bottom: 1px solid #e2e8f0; }
-    th { background: #f1f5f9; font-weight: 600; }
-    .footer { text-align: center; margin-top: 40px; padding-top: 20px; border-top: 1px solid #e2e8f0; font-size: 0.9em; color: #64748b; }
-  </style>
-</head>
-<body>
-  <div style="text-align: center; margin-bottom: 30px;">
-    <h1><span class="emoji">New Donation Received</span></h1>
-    <p>A donation has been submitted through Sankalp platform.</p>
-  </div>
-
-  <div class="section">
-    <h2>Donor Information</h2>
-    <table>
-      <tr><th>Name</th><td>${name}</td></tr>
-      <tr><th>Email</th><td>${email}</td></tr>
-      <tr><th>Phone</th><td>${phone}</td></tr>
-      <tr><th>City</th><td>${city}</td></tr>
-    </table>
-  </div>
-
-  <div class="section highlight">
-    <h2>Donation Details</h2>
-    <table>
-      <tr><th>Amount</th><td>Rs.${amount}</td></tr>
-      <tr><th>Date</th><td>${adminDate}</td></tr>
-    </table>
-  </div>
-
-${wants80g === "true" || wants80g === true || wants80g === "on" ? `
-  <div class="section">
-    <h2>80G Tax Details</h2>
-    <table>
-      <tr><th>PAN</th><td>${pan}</td></tr>
-      <tr><th>Address</th><td>${address}</td></tr>
-      <tr><th>Pincode</th><td>${pin}</td></tr>
-      <tr><th>State</th><td>${state}</td></tr>
-    </table>
-  </div>` : ""}
-
-  <div class="footer">
-    <p>Automated notification from Sankalp donation system</p>
-  </div>
-</body>
-</html>
-    `;
-
-    try {
-      await transporter.sendMail({
-        from: `"Sankalp Foundation" <${process.env.SMTP_USER}>`,
-        to: process.env.ADMIN_EMAIL || process.env.SMTP_USER,
-        subject: `New Donation - Rs.${amount}`,
-        html: adminHtml,
-      });
-    } catch (mailError) {
-      console.error("ADMIN EMAIL ERROR:", mailError);
-      mailWarnings.push("Admin email could not be sent");
-    }
-
-    const donorDate = new Date().toLocaleDateString("en-IN");
-    const donorHtml = `
-<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="utf-8">
-  <style>
-    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px; background: #f8fafc; }
-    .header { background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%); color: white; padding: 30px; text-align: center; border-radius: 12px 12px 0 0; }
-    .content { background: white; padding: 30px; border-radius: 0 0 12px 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); }
-    .highlight { background: #dbeafe; padding: 20px; border-radius: 12px; margin: 20px 0; text-align: center; }
-    table { width: 100%; border-collapse: collapse; margin: 20px 0; }
-    th, td { padding: 15px; text-align: left; border-bottom: 1px solid #e2e8f0; }
-    th { background: #f8fafc; font-weight: 600; color: #1e40af; }
-    .footer { text-align: center; margin-top: 40px; padding-top: 20px; border-top: 1px solid #e2e8f0; font-size: 0.9em; color: #64748b; }
-  </style>
-</head>
-<body>
-  <div class="header">
-    <h1>Donation Successful</h1>
-    <p>Thank you for supporting Sankalp Foundation</p>
-  </div>
-
-  <div class="content">
-    <div class="highlight">
-      <h2>Receipt #${Math.floor(Math.random() * 10000)}</h2>
-      <h1>Rs.${amount}</h1>
-      <p>Date: ${donorDate}</p>
-    </div>
-
-    <h3>Donor Information</h3>
-    <table>
-      <tr><th>Name</th><td>${name}</td></tr>
-      <tr><th>Email</th><td>${email}</td></tr>
-      <tr><th>Phone</th><td>${phone}</td></tr>
-      <tr><th>City</th><td>${city}</td></tr>
-    </table>
-
-    ${wants80g === "true" || wants80g === true || wants80g === "on" ? `
-    <div style="background: #ecfdf5; padding: 20px; border-radius: 12px; margin: 20px 0;">
-      <h3>80G Certificate Eligible</h3>
-      <table>
-        <tr><th>PAN</th><td>${pan}</td></tr>
-        <tr><th>Address</th><td>${address}</td></tr>
-      </table>
-    </div>` : ""}
-
-    <p style="margin: 30px 0; padding: 20px; background: #fef3c7; border-radius: 8px; border-left: 4px solid #f59e0b;">
-      <strong>Next Steps:</strong><br>
-      Our team will verify your payment and issue receipt/certificate within 7 days.
-    </p>
-
-    <div class="footer">
-      <p>Thank you for your generosity.</p>
-      <p>Sankalp Foundation</p>
-    </div>
-  </div>
-</body>
-</html>
-    `;
-
-    try {
-      await transporter.sendMail({
-        from: `"Sankalp Foundation" <${process.env.SMTP_USER}>`,
-        to: email,
-        subject: `Receipt #${Math.floor(Math.random() * 10000)} - Rs.${amount} Donation`,
-        html: donorHtml,
-      });
-    } catch (mailError) {
-      console.error("DONOR EMAIL ERROR:", mailError);
-      mailWarnings.push("Donor email could not be sent");
-    }
-
-    res.json({ success: true, warnings: mailWarnings });
+    res.json({
+      success: true,
+      message: "Donation details saved successfully.",
+      donation: insertData?.[0] || null,
+    });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: err.message || "Request failed" });
